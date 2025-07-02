@@ -48,6 +48,7 @@ selfupdate_unpacking = 解凍中...
 
 noita_not_yet = まだ準備中です。Noitaの開始をお待ち下さい。
 noita_can_connect = Noitaに接続中です。今すぐNoitaで「新規ゲーム」を開始してください！
+noita_opening_ports = UPnPポートを開いてみる。
 noita_connected = Noitaに接続されました。
 
 netman_save_lobby = ロビーIDをクリップボードに保存する

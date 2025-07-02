@@ -48,6 +48,7 @@ selfupdate_unpacking = Descompactando...
 
 noita_not_yet = Ainda não está pronto. Por favor aguarde antes de iniciar Noita.
 noita_can_connect = Esperando conexão Noita. Agora é hora de iniciar um novo jogo Noita!
+noita_opening_ports = Tentando abrir portas UPnP.
 noita_connected = Instância local Noita conectada.
 
 netman_save_lobby = Salvar id do lobby para área de transferência

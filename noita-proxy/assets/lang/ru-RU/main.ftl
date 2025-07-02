@@ -48,6 +48,7 @@ selfupdate_unpacking = Распаковка...
 
 noita_not_yet = Ещё не готово. Подождите, прежде чем запускать игру.
 noita_can_connect = Ожидается подключение. Можно запускать игру.
+noita_opening_ports = Попытка открыть порты UPnP.
 noita_connected = Локальный инстанс Ноиты подключен.
 
 netman_save_lobby = Сохранить код лобби в буфер обмена

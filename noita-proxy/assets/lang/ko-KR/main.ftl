@@ -48,6 +48,7 @@ selfupdate_unpacking = 압축 푸는 중...
 
 noita_not_yet = 아직 시작할 준비가 되지 않았습니다. 노이타를 시작하기 전에 기다리세요.
 noita_can_connect = 노이타 연결을 기다리는 중. 노이타에서 새 게임을 시작할 시간이에요!
+noita_opening_ports = UPnP 포트 열기 시도.
 noita_connected = 로컬 노이타 인스턴스 연결됨.
 
 netman_save_lobby = 로비 ID 클립보드에 복사하기

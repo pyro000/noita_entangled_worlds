@@ -1281,17 +1281,27 @@ impl App {
         let mut goto_menu = false;
         let stopped = netman.stopped.load(Ordering::Relaxed);
         let accept_local = netman.accept_local.load(Ordering::Relaxed);
+        let local_opening_ports = netman.local_opening_ports.load(Ordering::Relaxed);
         let local_connected = netman.local_connected.load(Ordering::Relaxed);
         egui::TopBottomPanel::bottom("noita_status").show(ctx, |ui| {
             ui.add_space(3.0);
             if accept_local {
+                let actual_noita_port = netman.actual_noita_port.load(Ordering::Relaxed);
+                let menssage_nc = format!("{} — PORT: {}", tr("noita_connected"), actual_noita_port);
+                let menssage_ncc = format!("{} — PORT: {}", tr("noita_can_connect"), actual_noita_port);
+
                 if local_connected {
-                    ui.colored_label(Color32::GREEN, tr("noita_connected"));
+                    ui.colored_label(Color32::GREEN, menssage_nc);
                 } else {
-                    ui.colored_label(Color32::YELLOW, tr("noita_can_connect"));
+                    ui.colored_label(Color32::YELLOW, menssage_ncc);
                 }
+                
             } else {
-                ui.label(tr("noita_not_yet"));
+                if local_opening_ports {
+                    ui.label(tr("noita_not_yet"));
+                } else {
+                    ui.colored_label(Color32::YELLOW, tr("noita_opening_ports"));
+                }
             }
         });
         egui::SidePanel::left("players")

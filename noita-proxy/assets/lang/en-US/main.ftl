@@ -48,6 +48,7 @@ selfupdate_unpacking = Unpacking...
 
 noita_not_yet = Not yet ready. Please wait before starting noita.
 noita_can_connect = Awaiting Noita connection. It's time to start new game in Noita now!
+noita_opening_ports = Trying opening UPnP ports.
 noita_connected = Local Noita instance connected.
 
 netman_save_lobby = Save lobby id to clipboard

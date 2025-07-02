@@ -48,6 +48,7 @@ selfupdate_unpacking = 正在解压中...
 
 noita_not_yet = 还没准备好，请等待Noita启动。
 noita_can_connect = 正在等待Noita连接。是时候开一把新的Noita了！
+noita_opening_ports = 尝试打开 UPnP 端口。
 noita_connected = 本地Noita实例已连接。
 
 netman_save_lobby = 将大厅id保存到剪贴板
