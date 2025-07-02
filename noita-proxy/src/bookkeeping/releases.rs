@@ -209,7 +209,7 @@ impl Release {
 
 pub fn get_latest_release(client: &Client) -> Result<Release, ReleasesError> {
     let response = client
-        .get("https://api.github.com/repos/IntQuant/noita_entangled_worlds/releases/latest")
+        .get("https://api.github.com/repos/pyro000/noita_entangled_worlds/releases/latest")
         .header("Accept", "application/vnd.github+json")
         .header("X-GitHub-Api-Version", "2022-11-28")
         .header("User-agent", "noita proxy")
@@ -221,7 +221,7 @@ pub fn get_latest_release(client: &Client) -> Result<Release, ReleasesError> {
 
 pub fn get_release_by_tag(client: &Client, tag: Tag) -> Result<Release, ReleasesError> {
     let url = format!(
-        "https://api.github.com/repos/IntQuant/noita_entangled_worlds/releases/tags/{}",
+        "https://api.github.com/repos/pyro000/noita_entangled_worlds/releases/tags/{}",
         tag.0
     );
     let response = client
