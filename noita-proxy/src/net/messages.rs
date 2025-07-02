@@ -4,6 +4,8 @@ use crate::{player_cosmetics::PlayerPngDesc, GameSettings};
 
 use super::{omni::OmniPeerId, world::WorldNetMessage};
 
+use crate::net::world::world_model::ChunkCoord;
+
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum Destination {
     Peer(OmniPeerId),
@@ -31,6 +33,12 @@ pub(crate) enum NetMsg {
     ModCompressed { data: Vec<u8> },
     WorldMessage(WorldNetMessage),
     PlayerColor(PlayerPngDesc, bool, Option<OmniPeerId>, String),
+    ChecksumRequest {
+        coords: Vec<ChunkCoord>,
+    },
+    ChecksumResponse {
+        checks: Vec<(ChunkCoord, u64)>,
+    },
 }
 
 impl From<MessageRequest<WorldNetMessage>> for MessageRequest<NetMsg> {

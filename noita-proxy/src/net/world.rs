@@ -130,6 +130,13 @@ pub(crate) enum WorldNetMessage {
     NotifyNewAuthority {
         chunk: ChunkCoord,
     },
+    ChecksumRequest {
+        coords: Vec<ChunkCoord>,
+    },
+    /// El peer responde con pares (chunk, checksum)
+    ChecksumResponse {
+        checks: Vec<(ChunkCoord, u64)>,
+    },
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -1037,6 +1044,7 @@ impl WorldManager {
                     },
                 );
             }
+
             WorldNetMessage::NotifyNewAuthority { chunk } => {
                 debug!("Notified of new authority");
                 let state = self.chunk_state.get_mut(&chunk);
@@ -1046,6 +1054,41 @@ impl WorldManager {
                     debug!("Got notified of new authority, but not a listener");
                 }
             }
+
+            WorldNetMessage::ChecksumRequest { coords } => {
+                // 1) Calcular el checksum local de cada chunk solicitado
+                let mut checks = Vec::with_capacity(coords.len());
+                for coord in coords {
+                    let checksum = self.outbound_model.compute_chunk_checksum(&coord);
+                    checks.push((coord, checksum));
+                }
+                // 2) Responder al que preguntó
+                self.emit_msg(
+                    Destination::Peer(source),
+                    WorldNetMessage::ChecksumResponse { checks },
+                );
+            }
+
+            WorldNetMessage::ChecksumResponse { checks } => {
+                // 1) Comparar con nuestros checksums
+                for (coord, remote_hash) in checks {
+                    let local_hash = self.outbound_model.compute_chunk_checksum(&coord);
+                    if local_hash != remote_hash {
+                        // 2) Si hay discrepancia, reenviar sólo el delta de ese chunk
+                        if let Some(delta) = self.outbound_model.get_chunk_delta(coord, false) {
+                            self.emit_msg(
+                                Destination::Host,
+                                WorldNetMessage::ListenUpdate {
+                                    delta,
+                                    priority: 0,
+                                    take_auth: false,
+                                },
+                            );
+                        }
+                    }
+                }
+            }
+
         }
     }
 

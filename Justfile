@@ -9,9 +9,15 @@ add_dylib_release: extract_steam_redist
     mkdir noita-proxy/target/release/ -p
     cp redist/libsteam_api.so noita-proxy/target/release/
 
+
+# RUN `rustup target add i686-pc-windows-gnu` first
+# RUN rustup target add i686-pc-windows-msvc if it doesn't work
 build:
-    cd noita-proxy && cargo build
     cd noita-proxy && cargo build --release
+    #cd ewext && cargo build --release --target=i686-pc-windows-gnu
+    cd ewext && cargo build --release --target=i686-pc-windows-msvc
+    #cp ewext/target/i686-pc-windows-gnu/release/ewext.dll quant.ew/ewext0.dll
+    cp ewext/target/i686-pc-windows-msvc/release/ewext.dll quant.ew/ewext0.dll
 
 ## ewext stuff
 build_luajit:

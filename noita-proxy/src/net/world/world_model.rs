@@ -7,6 +7,8 @@ use encoding::{NoitaWorldUpdate, PixelRun, PixelRunner};
 use rustc_hash::{FxHashMap, FxHashSet};
 use tracing::info;
 
+use xxhash_rust::xxh64::Xxh64;
+
 pub(crate) mod chunk;
 pub mod encoding;
 
@@ -271,5 +273,40 @@ impl WorldModel {
     pub(crate) fn forget_chunk(&mut self, chunk: ChunkCoord) {
         self.chunks.remove(&chunk);
         self.updated_chunks.remove(&chunk);
+    }
+
+    pub fn compute_chunk_checksum(&self, coord: &ChunkCoord) -> u64 {
+        if let Some(_) = self.chunks.get(coord) {
+            // 1) Genera la actualización de Noita para ese chunk
+            let update = self.get_noita_update(
+                coord.0 * CHUNK_SIZE as i32,
+                coord.1 * CHUNK_SIZE as i32,
+                CHUNK_SIZE as u32,
+                CHUNK_SIZE as u32,
+            );
+
+            // 2) Crea el hasher
+            let mut hasher = Xxh64::new(0);
+
+            // 3) Mezcla el header
+            let h = &update.header;
+            hasher.update(&h.x.to_le_bytes());
+            hasher.update(&h.y.to_le_bytes());
+            hasher.update(&[h.w]);
+            hasher.update(&[h.h]);
+            hasher.update(&h.run_count.to_le_bytes());
+
+            // 4) Mezcla cada run: length + material + flags
+            for run in &update.runs {
+                hasher.update(&run.length.to_le_bytes());
+                hasher.update(&run.data.material.to_le_bytes());
+                hasher.update(&[run.data.flags]);
+            }
+
+            // 5) Devuelve el digest
+            hasher.digest()
+        } else {
+            0
+        }
     }
 }

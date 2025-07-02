@@ -497,6 +497,11 @@ impl NetManager {
                                 }
                             }
                             NetMsg::Kick => std::process::exit(0),
+
+                            NetMsg::ChecksumRequest { .. }
+                            | NetMsg::ChecksumResponse { .. } => {
+                                // No hacemos nada aquí; lo procesa world.rs
+                            }
                         }
                     }
                 }
