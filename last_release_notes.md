@@ -1,4 +1,4 @@
-## Noita Entangled Worlds v0.32.13
+## Noita Entangled Worlds v0.32.14
 
 - Fix crash on new Noita version.
 - Fix negative notplayer health.

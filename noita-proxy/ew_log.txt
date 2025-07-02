@@ -1,0 +1,44 @@
+[2m2025-07-02T23:09:54.982739Z[0m [32m INFO[0m [2mnoita_proxy[0m[2m:[0m Launch command: None
+[2m2025-07-02T23:09:55.141913Z[0m [32m INFO[0m [2mnoita_proxy[0m[2m:[0m Setting fonts...
+[2m2025-07-02T23:09:55.141968Z[0m [32m INFO[0m [2mnoita_proxy[0m[2m:[0m Installing image loaders...
+[2m2025-07-02T23:09:55.141992Z[0m [32m INFO[0m [2mnoita_proxy[0m[2m:[0m Initializing steam state...
+[2m2025-07-02T23:09:55.142009Z[0m [32m INFO[0m [2mnoita_proxy::util::steam_helper[0m[2m:[0m Initializing steam client...
+[2m2025-07-02T23:09:55.239990Z[0m [32m INFO[0m [2mnoita_proxy::util::steam_helper[0m[2m:[0m Initializing relay network accesss...
+[2m2025-07-02T23:09:55.243451Z[0m [32m INFO[0m [2mnoita_proxy[0m[2m:[0m Checking if running on steam deck...
+[2m2025-07-02T23:09:55.243566Z[0m [32m INFO[0m [2mnoita_proxy[0m[2m:[0m Creating the app...
+[2m2025-07-02T23:09:55.243645Z[0m [32m INFO[0m [2mnoita_proxy::util::steam_helper[0m[2m:[0m Spawned steam callback thread
+[2m2025-07-02T23:09:55.243648Z[0m [32m INFO[0m [2mnoita_proxy::bookkeeping::save_state[0m[2m:[0m Has savestate: false
+[2m2025-07-02T23:09:55.244008Z[0m [32m INFO[0m [2mnoita_proxy::bookkeeping::save_state[0m[2m:[0m Will save to: \\?\C:\Users\Administrator\Desktop\noita_entangled_worlds\noita-proxy\target\debug\save_state
+[2m2025-07-02T23:09:55.434022Z[0m [32m INFO[0m [2mnoita_proxy::bookkeeping::mod_manager[0m[2m:[0m Path is valid, checking mod now
+[2m2025-07-02T23:09:55.434047Z[0m [32m INFO[0m [2mnoita_proxy::bookkeeping::mod_manager[0m[2m:[0m Appdata path: C:\Users\Administrator\AppData
+[2m2025-07-02T23:09:55.434049Z[0m [32m INFO[0m [2mnoita_proxy::bookkeeping::mod_manager[0m[2m:[0m Trying save path: C:\Users\Administrator\AppData\LocalLow/Nolla_Games_Noita/
+[2m2025-07-02T23:09:55.434126Z[0m [32m INFO[0m [2mnoita_proxy::bookkeeping::mod_manager[0m[2m:[0m Save path exists
+[2m2025-07-02T23:09:55.434134Z[0m [32m INFO[0m [2mnoita_proxy::bookkeeping::mod_manager[0m[2m:[0m Found game save path: C:\Users\Administrator\AppData\LocalLow/Nolla_Games_Noita/
+[2m2025-07-02T23:09:55.435180Z[0m [32m INFO[0m [2mnoita_proxy::bookkeeping::mod_manager[0m[2m:[0m Trying to enable mod: Ok(())
+[2m2025-07-02T23:09:55.571371Z[0m [32m INFO[0m [2mnoita_proxy::bookkeeping::mod_manager[0m[2m:[0m Mod path: E:\Games\Steam\steamapps\common\Noita\mods\quant.ew
+[2m2025-07-02T23:09:55.571799Z[0m [32m INFO[0m [2mnoita_proxy::bookkeeping::mod_manager[0m[2m:[0m Mod version: Some(Version { major: 0, minor: 32, patch: 14 })
+[2m2025-07-02T23:09:55.571818Z[0m [32m INFO[0m [2mnoita_proxy::bookkeeping::mod_manager[0m[2m:[0m Mod is ok
+[2m2025-07-02T23:11:50.811151Z[0m [32m INFO[0m [2mnoita_proxy[0m[2m:[0m Looking for UPnP gateway on 192.168.10.8
+[2m2025-07-02T23:11:51.783561Z[0m [32m INFO[0m [2mnoita_proxy[0m[2m:[0m UPnP TCP mapped OK → 192.168.10.8:5123
+[2m2025-07-02T23:11:51.981601Z[0m [32m INFO[0m [2mnoita_proxy[0m[2m:[0m UPnP UDP mapped OK → 192.168.10.8:5123
+[2m2025-07-02T23:11:51.982794Z[0m [32m INFO[0m [2mnoita_proxy::bookkeeping::save_state[0m[2m:[0m No save for run_info, no need to load anything
+[2m2025-07-02T23:11:51.982809Z[0m [32m INFO[0m [2mnoita_proxy[0m[2m:[0m Using random seed: 11019744300879928687
+[2m2025-07-02T23:11:51.983384Z[0m [32m INFO[0m [2mnoita_proxy::bookkeeping::mod_manager[0m[2m:[0m Found 438 progress entries
+[2m2025-07-02T23:11:51.983427Z[0m [32m INFO[0m [2mnoita_proxy::net[0m[2m:[0m Starting netmanager
+[2m2025-07-02T23:11:51.997204Z[0m [32m INFO[0m [2mnoita_proxy::net[0m[2m:[0m Listening for noita connection on 127.0.0.1:21251
+[2m2025-07-02T23:11:51.997350Z[0m [32m INFO[0m [2mnoita_proxy::net[0m[2m:[0m Actual Socket Noita port: 21251
+[2m2025-07-02T23:11:51.997361Z[0m [32m INFO[0m [2mnoita_proxy::net[0m[2m:[0m Is host: true
+[2m2025-07-02T23:11:51.997437Z[0m [32m INFO[0m [2mnoita_proxy::bookkeeping::save_state[0m[2m:[0m No save for world_chunks, no need to load anything
+[2m2025-07-02T23:11:52.120412Z[0m [32m INFO[0m [2mnoita_proxy::net[0m[2m:[0m Peer connected 0
+[2m2025-07-02T23:11:52.120424Z[0m [32m INFO[0m [2mnoita_proxy::net[0m[2m:[0m Sending start game message
+[2m2025-07-02T23:11:54.210009Z[0m [32m INFO[0m [2mnoita_proxy[0m[2m:[0m Starting the game now
+[2m2025-07-02T23:12:01.374148Z[0m [32m INFO[0m [2mnoita_proxy::net[0m[2m:[0m New stream incoming from 127.0.0.1:53140
+[2m2025-07-02T23:12:01.380742Z[0m [32m INFO[0m [2mnoita_proxy::net[0m[2m:[0m New stream connected
+[2m2025-07-02T23:12:01.380761Z[0m [32m INFO[0m [2mnoita_proxy::net[0m[2m:[0m Chosen nickname: Пиро
+[2m2025-07-02T23:12:01.380907Z[0m [32m INFO[0m [2mnoita_proxy::net[0m[2m:[0m Settings sent
+[2m2025-07-02T23:12:18.218374Z[0m [33m WARN[0m [2mnoita_proxy::net[0m[2m:[0m Game closed (Lost connection to noita instance: Couldn't receive the length from stream)
+[2m2025-07-02T23:12:18.218458Z[0m [32m INFO[0m [2mshared::message_socket[0m[2m:[0m Message socket dropped
+[2m2025-07-02T23:12:20.881825Z[0m [32m INFO[0m [2mnoita_proxy::bookkeeping::save_state[0m[2m:[0m Saved \\?\C:\Users\Administrator\Desktop\noita_entangled_worlds\noita-proxy\target\debug\save_state\world_chunks.bit
+[2m2025-07-02T23:12:20.881862Z[0m [32m INFO[0m [2mnoita_proxy::net::world[0m[2m:[0m Saved chunk data
+[2m2025-07-02T23:12:20.883069Z[0m [32m INFO[0m [2mnoita_proxy::bookkeeping::save_state[0m[2m:[0m Saved \\?\C:\Users\Administrator\Desktop\noita_entangled_worlds\noita-proxy\target\debug\save_state\run_info.bit
+[2m2025-07-02T23:12:20.883080Z[0m [32m INFO[0m [2mnoita_proxy::net[0m[2m:[0m Saved run info

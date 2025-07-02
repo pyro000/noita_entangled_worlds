@@ -43,6 +43,10 @@ mod util;
 use util::args::Args;
 pub use util::{args, lang, steam_helper};
 
+use igd::{search_gateway, PortMappingProtocol, SearchOptions};
+use std::net::{UdpSocket, Ipv4Addr, SocketAddrV4};
+use tracing::{warn};
+
 mod bookkeeping;
 use crate::net::messages::NetMsg;
 use crate::net::omni::OmniPeerId;
@@ -845,6 +849,7 @@ impl App {
                 colors: self.appearance.player_color,
             },
             noita_port,
+            listen_addr: None,
         }
     }
 
@@ -863,10 +868,56 @@ impl App {
 
     fn start_server(&mut self) {
         let bind_addr = SocketAddr::new("0.0.0.0".parse().unwrap(), DEFAULT_PORT);
+
+
+
+        // Figure out LAN IP
+        let local_ip = match UdpSocket::bind(("0.0.0.0", 0)) {
+            Ok(sock) => {
+                let _ = sock.connect(("8.8.8.8", 80));
+                match sock.local_addr() {
+                    Ok(std::net::SocketAddr::V4(a)) => *a.ip(),
+                    _ => Ipv4Addr::LOCALHOST,
+                }
+            }
+            Err(_) => Ipv4Addr::LOCALHOST,
+        };
+        // Build a SearchOptions that binds SSDP to your local interface
+        let opts = SearchOptions {
+            bind_addr: SocketAddr::new(IpAddr::V4(local_ip), 0),
+            ..Default::default()
+        };
+        info!("Looking for UPnP gateway on {}", local_ip);
+
+        // Try IGDv1
+        match search_gateway(opts) {
+            Ok(gateway) => {
+                let internal = SocketAddrV4::new(local_ip, DEFAULT_PORT);
+                for proto in &[PortMappingProtocol::TCP, PortMappingProtocol::UDP] {
+                    match gateway.add_port(
+                        *proto,
+                        DEFAULT_PORT,     // external port
+                        internal,         // internal addr
+                        3600,             // lease seconds
+                        "NoitaProxy-UPnP" // description
+                    ) {
+                        Ok(()) => info!("UPnP {:?} mapped OK → {}", proto, internal),
+                        Err(e)  => warn!("UPnP {:?} failed: {}", proto, e),
+                    }
+                }
+            }
+            Err(e) => warn!("No UPnP gateway found: {}", e),
+        }
+
         let peer = Peer::host(bind_addr, None).unwrap();
-        let netman = net::NetManager::new(PeerVariant::Tangled(peer), self.get_netman_init());
+
+        let mut init = self.get_netman_init();
+        init.listen_addr = Some(bind_addr);
+
+        let netman = net::NetManager::new(PeerVariant::Tangled(peer), init);
+        netman.local_upnp.store(true, Ordering::Relaxed);
         self.set_netman_settings(&netman);
-        self.change_state_to_netman(netman, player_path(self.modmanager_settings.mod_path()));
+        self.change_state_to_netman(netman, player_path(self.modmanager_settings.mod_path()));        
     }
 
     fn set_netman_settings(&mut self, netman: &Arc<net::NetManager>) {
@@ -1281,14 +1332,19 @@ impl App {
         let mut goto_menu = false;
         let stopped = netman.stopped.load(Ordering::Relaxed);
         let accept_local = netman.accept_local.load(Ordering::Relaxed);
-        let local_opening_ports = netman.local_opening_ports.load(Ordering::Relaxed);
+        let local_upnp = netman.local_upnp.load(Ordering::Relaxed);
         let local_connected = netman.local_connected.load(Ordering::Relaxed);
         egui::TopBottomPanel::bottom("noita_status").show(ctx, |ui| {
             ui.add_space(3.0);
             if accept_local {
-                let actual_noita_port = netman.actual_noita_port.load(Ordering::Relaxed);
-                let menssage_nc = format!("{} — PORT: {}", tr("noita_connected"), actual_noita_port);
-                let menssage_ncc = format!("{} — PORT: {}", tr("noita_can_connect"), actual_noita_port);
+                let address = netman
+                    .init_settings
+                    .listen_addr
+                    .map(|a| a.to_string())
+                    .unwrap_or_else(|| "UNKNOWN".to_owned());
+
+                let menssage_nc = format!("{} — Listening to: {}", tr("noita_connected"), address);
+                let menssage_ncc = format!("{} — Listening to: {}", tr("noita_can_connect"), address);
 
                 if local_connected {
                     ui.colored_label(Color32::GREEN, menssage_nc);
@@ -1297,7 +1353,7 @@ impl App {
                 }
                 
             } else {
-                if local_opening_ports {
+                if local_upnp {
                     ui.label(tr("noita_not_yet"));
                 } else {
                     ui.colored_label(Color32::YELLOW, tr("noita_opening_ports"));
@@ -1846,6 +1902,7 @@ fn cli_setup() -> (steam_helper::SteamState, NetManagerInit) {
             colors: appearance.player_color,
         },
         noita_port: 21251,
+        listen_addr: None,
     };
     (state, netmaninit)
 }

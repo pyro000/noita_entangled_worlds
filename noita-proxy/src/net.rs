@@ -26,12 +26,6 @@ use world::{world_info::WorldInfo, NoitaWorldUpdate, WorldManager};
 use tangled::Reliability;
 use tracing::{error, info, warn};
 
-use std::net::{IpAddr, Ipv4Addr, SocketAddrV4, UdpSocket};
-use igd::{search_gateway, PortMappingProtocol, SearchOptions};
-use socket2::SockAddr;
-
-use omni::PeerVariant;
-
 use crate::mod_manager::{get_mods, ModmanagerSettings};
 use crate::player_cosmetics::{create_player_png, get_player_skin, PlayerPngDesc};
 use crate::{
@@ -116,6 +110,7 @@ pub struct NetManagerInit {
     pub modmanager_settings: ModmanagerSettings,
     pub player_png_desc: PlayerPngDesc,
     pub noita_port: u16,
+    pub listen_addr: Option<SocketAddr>,
 }
 
 pub struct NetManager {
@@ -123,8 +118,8 @@ pub struct NetManager {
     pub pending_settings: Mutex<GameSettings>,
     pub settings: Mutex<GameSettings>,
     pub continue_running: AtomicBool,
-    pub local_opening_ports: AtomicBool,
     pub accept_local: AtomicBool,
+    pub local_upnp: AtomicBool,
     pub local_connected: AtomicBool,
     pub stopped: AtomicBool,
     pub error: Mutex<Option<io::Error>>,
@@ -144,6 +139,7 @@ pub struct NetManager {
     #[allow(clippy::type_complexity)]
     pub minas: Mutex<HashMap<OmniPeerId, ImageBuffer<Rgba<u8>, Vec<u8>>>>,
     pub new_desc: Mutex<Option<PlayerPngDesc>>,
+    pub listen_addr: Option<SocketAddr>,
 }
 
 impl NetManager {
@@ -153,8 +149,8 @@ impl NetManager {
             pending_settings: Mutex::new(GameSettings::default()),
             settings: Mutex::new(GameSettings::default()),
             continue_running: AtomicBool::new(true),
-            local_opening_ports: AtomicBool::new(false),
             accept_local: AtomicBool::new(false),
+            local_upnp: AtomicBool::new(false),
             local_connected: AtomicBool::new(false),
             stopped: AtomicBool::new(false),
             error: Default::default(),
@@ -173,6 +169,7 @@ impl NetManager {
             nicknames: Default::default(),
             minas: Default::default(),
             new_desc: Default::default(),
+            listen_addr: None,
         }
         .into()
     }
@@ -250,106 +247,21 @@ impl NetManager {
                 error!("Could not allow to reuse port: {}", err)
             }
         }
-        let port = self.init_settings.noita_port;
-
-        info!("Settings Noita port: {port}");
-
-        if self.is_host() {
-            match &self.peer {
-                PeerVariant::Tangled(_) => {
-                    // Descubrir IP LAN automáticamente
-                    let local_ip = match UdpSocket::bind(("0.0.0.0", 0)) {
-                        Ok(sock) => { let _ = sock.connect(("8.8.8.8", 80)); match sock.local_addr() {
-                            Ok(std::net::SocketAddr::V4(a)) => *a.ip(),
-                            _ => Ipv4Addr::LOCALHOST,
-                        }},
-                        Err(_) => Ipv4Addr::LOCALHOST,
-                    };
-
-                    let octs = local_ip.octets();
-                    let broadcast = Ipv4Addr::new(octs[0], octs[1], octs[2], 255);
-
-                    let bind_addr = SocketAddr::new(IpAddr::V4(local_ip), 0);
-                    //let broadcast_addr = SocketAddr::new(IpAddr::V4(broadcast), 1900);
-                        
-                    let opts = SearchOptions {
-                        bind_addr: bind_addr,
-                        //broadcast_address: broadcast_addr,
-                        ..Default::default()
-                    };
-
-
-                    info!("Buscando gateway UPnP usando {} → {}", local_ip, broadcast);
-                    match search_gateway(opts) {
-                        Ok(gateway) => {
-                            let local = SocketAddrV4::new(local_ip, port);
-                            for proto in &[PortMappingProtocol::TCP, PortMappingProtocol::UDP] {
-                                match gateway.add_port(
-                                    *proto,
-                                    port,      // external port
-                                    local,     // internal addr
-                                    3600,      // lease en segundos
-                                    "NoitaProxy"
-                                ) {
-                                    Ok(()) => info!("UPnP {:?} mapeado OK en {}", proto, local),
-                                    Err(e)  => warn!("UPnP {:?} fallo: {}", proto, e),
-                                }
-                            }
-                        }
-                        Err(e) => warn!("No encontré gateway UPnP: {}", e),
-                    }
-                }
-                PeerVariant::Steam(_) => {
-                    info!("Using Steam Networking");
-                }
-            }
-
-        }
-        self.local_opening_ports.store(true, Ordering::Relaxed);
-
-        // Prepara la lista de direcciones en orden: ENV, 0.0.0.0, localhost
-        let mut bind_addrs = Vec::new();
-        if let Ok(s) = env::var("NP_NOITA_ADDR") {
-            if let Ok(addr) = s.parse::<SocketAddr>() {
-                bind_addrs.push(addr);
-            }
-        }
-        bind_addrs.push(SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), port));
-        bind_addrs.push(SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), port));
-
-        let mut last_err = None;
-        let _address = bind_addrs
-            .into_iter()
-            .find_map(|addr| {
-                // Convertimos std::net::SocketAddr → socket2::SockAddr
-                let sock_addr = SockAddr::from(addr);
-
-                // Intento bind → listen → nonblocking
-                match socket.bind(&sock_addr) {
-                    Ok(_) => {
-                        // Una vez hecho el bind, escucha y set nonblocking
-                        if let Err(e) = socket.listen(1) {
-                            last_err = Some(e);
-                            return None;
-                        }
-                        if let Err(e) = socket.set_nonblocking(true) {
-                            last_err = Some(e);
-                            return None;
-                        }
-                        info!("Listening for Noita connection on {}", addr);
-                        Some(addr)
-                    }
-                    Err(e) => {
-                        last_err = Some(e);
-                        None
-                    }
-                }
-            })
-            .unwrap_or_else(|| panic!("No pude bindear en ninguna dirección: {:?}", last_err));
+        let address: SocketAddr = env::var("NP_NOITA_ADDR")
+            .ok()
+            .and_then(|x| x.parse().ok())
+            .unwrap_or_else(|| {
+                SocketAddr::new("127.0.0.1".parse().unwrap(), self.init_settings.noita_port)
+            });
+        info!("Listening for noita connection on {}", address);
+        let address = address.into();
+        socket.bind(&address)?;
+        socket.listen(1)?;
+        socket.set_nonblocking(true)?;
 
         let actual_port = socket.local_addr()?.as_socket().unwrap().port();
         self.actual_noita_port.store(actual_port, Ordering::Relaxed);
-        info!("Actual Noita port: {actual_port}");
+        info!("Actual Socket Noita port: {actual_port}");
 
         if self.is_host() {
             self.accept_local.store(true, Ordering::Relaxed);
