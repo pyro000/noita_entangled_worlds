@@ -139,7 +139,6 @@ pub struct NetManager {
     #[allow(clippy::type_complexity)]
     pub minas: Mutex<HashMap<OmniPeerId, ImageBuffer<Rgba<u8>, Vec<u8>>>>,
     pub new_desc: Mutex<Option<PlayerPngDesc>>,
-    pub listen_addr: Option<SocketAddr>,
 }
 
 impl NetManager {
@@ -169,7 +168,6 @@ impl NetManager {
             nicknames: Default::default(),
             minas: Default::default(),
             new_desc: Default::default(),
-            listen_addr: None,
         }
         .into()
     }

@@ -394,6 +394,7 @@ enum AppState {
     ModManager,
     TangledConnecting {
         peer: Peer,
+        addr: SocketAddr,
     },
     ConnectedLobby {
         netman: NetManStopOnDrop,
@@ -799,6 +800,10 @@ impl App {
     }
 
     fn get_netman_init(&self) -> NetManagerInit {
+        self.get_netman_init_with_host(false)
+    }
+
+    fn get_netman_init_with_host(&self, host: bool) -> NetManagerInit {
         let mut id = "no name found".to_string();
         let steam_nickname = if let Ok(steam) = &self.steam_state {
             let sid = steam.get_my_id();
@@ -831,7 +836,8 @@ impl App {
                 cosmetics.2 = false
             }
         }
-        let noita_port = if self.app_saved_state.random_ports {
+
+        let noita_port = if !host || self.app_saved_state.random_ports {
             0
         } else {
             21251
@@ -869,7 +875,10 @@ impl App {
     fn start_server(&mut self) {
         let bind_addr = SocketAddr::new("0.0.0.0".parse().unwrap(), DEFAULT_PORT);
 
-
+        let peer = Peer::host(bind_addr, None).unwrap();
+        let mut init = self.get_netman_init_with_host(true);
+        init.listen_addr = Some(bind_addr);
+        let netman = net::NetManager::new(PeerVariant::Tangled(peer), init);
 
         // Figure out LAN IP
         let local_ip = match UdpSocket::bind(("0.0.0.0", 0)) {
@@ -909,12 +918,7 @@ impl App {
             Err(e) => warn!("No UPnP gateway found: {}", e),
         }
 
-        let peer = Peer::host(bind_addr, None).unwrap();
-
-        let mut init = self.get_netman_init();
-        init.listen_addr = Some(bind_addr);
-
-        let netman = net::NetManager::new(PeerVariant::Tangled(peer), init);
+        
         netman.local_upnp.store(true, Ordering::Relaxed);
         self.set_netman_settings(&netman);
         self.change_state_to_netman(netman, player_path(self.modmanager_settings.mod_path()));        
@@ -941,11 +945,13 @@ impl App {
 
     fn start_connect(&mut self, addr: SocketAddr) {
         let peer = Peer::connect(addr, None).unwrap();
-        self.state = AppState::TangledConnecting { peer };
+        self.state = AppState::TangledConnecting { peer, addr };
     }
 
-    fn start_connect_step_2(&mut self, peer: Peer) {
-        let netman = net::NetManager::new(PeerVariant::Tangled(peer), self.get_netman_init());
+    fn start_connect_step_2(&mut self, peer: Peer, addr: SocketAddr) {
+        let mut init = self.get_netman_init();
+        init.listen_addr = Some(addr);
+        let netman = net::NetManager::new(PeerVariant::Tangled(peer), init);
         self.change_state_to_netman(netman, player_path(self.modmanager_settings.mod_path()));
     }
 
@@ -1337,14 +1343,31 @@ impl App {
         egui::TopBottomPanel::bottom("noita_status").show(ctx, |ui| {
             ui.add_space(3.0);
             if accept_local {
-                let address = netman
-                    .init_settings
-                    .listen_addr
-                    .map(|a| a.to_string())
-                    .unwrap_or_else(|| "UNKNOWN".to_owned());
+                let address = if netman.peer.is_steam() {
+                    let stst = "(Steam)";
 
-                let menssage_nc = format!("{} — Listening to: {}", tr("noita_connected"), address);
-                let menssage_ncc = format!("{} — Listening to: {}", tr("noita_can_connect"), address);
+                    if let Some(lid) = netman.peer.lobby_id() {
+                        format!("{} {}", lid.raw(), stst)
+                    } else {
+                        format!("UNKNOWN {}", stst)
+                    }
+                } else {
+                    let addr = netman
+                        .init_settings
+                        .listen_addr
+                        .map(|a| a.to_string())
+                        .unwrap_or_else(|| "UNKNOWN".to_owned());
+                    format!("{}", addr)
+                };
+
+                let action = if netman.peer.is_host() {
+                    "Listening"
+                } else {
+                    "Connected"
+                };
+
+                let menssage_nc = format!("{} — {} to: {}", tr("noita_connected"), action, address);
+                let menssage_ncc = format!("{} — {} to: {}", tr("noita_can_connect"), action, address);
 
                 if local_connected {
                     ui.colored_label(Color32::GREEN, menssage_nc);
@@ -1687,7 +1710,7 @@ impl eframe::App for App {
                         });
                     });
             }
-            AppState::TangledConnecting { peer } => {
+            AppState::TangledConnecting { peer, addr: _ } => {
                 egui::CentralPanel::default().show(ctx, |ui| {
                     ui.label(tr("ip_wait_for_connection"));
                 });
@@ -1698,12 +1721,12 @@ impl eframe::App for App {
                     return;
                 }
                 if peer.my_id().is_some() {
-                    let AppState::TangledConnecting { peer } =
+                    let AppState::TangledConnecting { peer, addr } =
                         mem::replace(&mut self.state, AppState::Connect)
                     else {
                         unreachable!();
                     };
-                    self.start_connect_step_2(peer);
+                    self.start_connect_step_2(peer, addr);
                 }
             }
         };
